@@ -1,7 +1,12 @@
 <?php
 // Initialize the session.
 // If you are using session_name("something"), don't forget it now!
-session_start();
+require_once 'global.php';
+start_app_session();
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_valid()) {
+    http_response_code(405);
+    exit('Invalid logout request.');
+}
 
 // Unset all of the session variables.
 $_SESSION = array();

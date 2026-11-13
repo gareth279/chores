@@ -3,17 +3,14 @@
 
 
 
-// Initialize the session
-session_set_cookie_params(2592000);
-
-session_start();
+require_once 'global.php';
+start_app_session();
 
 // Check if the user is already logged in, if yes then redirect him to welcome page
 if(isset($_SESSION["loggedin"]) && $_SESSION["loggedin"] === true){
     header("location: index.php");
     exit;
 }
-include 'global.php';
 $loginerrormessage = "";
 // Include config file
 //require_once "config.php";
@@ -32,7 +29,7 @@ $mysqli = new mysqli($dbhostname, $dbusername, $dbpassword, $dbdatabase);
 //    $mysqli = new mysqli("localhost", "username", "password", "login_system"); 
     
     // Check for errors 
-    if ($mysqli->connect_error) { die("Connection failed: " . $mysqli->connect_error); }     
+    if ($mysqli->connect_error) { error_log('Chores database connection failed: ' . $mysqli->connect_error); http_response_code(500); exit('The request could not be completed. Please try again later.'); }
     // Prepare and bind the SQL statement 
     $stmt = $mysqli->prepare("SELECT peopleid, name, password, parent FROM people WHERE email = ?"); 
     
@@ -59,6 +56,8 @@ $mysqli = new mysqli($dbhostname, $dbusername, $dbpassword, $dbdatabase);
     // Verify the password 
     if (password_verify($userpassword, $hashed_password)) { 
     
+    // Rotate the session identifier after authentication.
+    session_regenerate_id(true);
     // Set the session variables 
     $_SESSION['loggedin'] = true; 
     $_SESSION['personid'] = $id; 
@@ -86,7 +85,7 @@ $mysqli = new mysqli($dbhostname, $dbusername, $dbpassword, $dbdatabase);
 //////////////////////////
 
 include 'header.php';
-echo $loginerrormessage
+echo htmlspecialchars($loginerrormessage, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 ?>
 <div class="chores">
 <form action="login.php" method="post">

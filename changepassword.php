@@ -3,15 +3,14 @@
 
 
 
-// Initialize the session
-session_start();
+require_once 'global.php';
+start_app_session();
  
 // Check if the user is already logged in, if yes then redirect him to welcome page
 if(!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true){
     header("location: login.php");
     exit;
 }
-include 'global.php';
 $loginerrormessage = "";
 // Include config file
 //require_once "config.php";
@@ -24,6 +23,8 @@ $peopleid = $_SESSION['personid'];
 $emailfromfrom = $_SESSION['username'];
 
  if (isset($_POST['submit'])) { 
+
+if (!csrf_valid()) { http_response_code(403); exit('Invalid request token. Reload and try again.'); }
 
 $userpassword = $_POST['currentPassword']; 
 $newpassword = $_POST['newPassword']; 
@@ -40,7 +41,7 @@ $mysqli = new mysqli($dbhostname, $dbusername, $dbpassword, $dbdatabase);
 //    $mysqli = new mysqli("localhost", "username", "password", "login_system"); 
     
     // Check for errors 
-    if ($mysqli->connect_error) { die("Connection failed: " . $mysqli->connect_error); }     
+    if ($mysqli->connect_error) { error_log('Chores database connection failed: ' . $mysqli->connect_error); http_response_code(500); exit('The request could not be completed. Please try again later.'); }
     // Prepare and bind the SQL statement 
     $stmt = $mysqli->prepare("SELECT peopleid, name, password, parent FROM people WHERE email = ?"); 
     
@@ -108,8 +109,9 @@ include 'header.php';
 
 
 <form name="changepassword.php" method="post">
+            <?php echo csrf_field(); ?>
 
-            <div class="validation-message text-center"><?php if(isset($loginerrormessage)) { echo $loginerrormessage; } ?></div>
+            <div class="validation-message text-center"><?php if(isset($loginerrormessage)) { echo h($loginerrormessage); } ?></div>
             <h2 class="text-center">Change Password</h2>
             <div>
                 <div class="row">

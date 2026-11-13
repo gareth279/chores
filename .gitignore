@@ -19,3 +19,5 @@ Thumbs.db
 vendor/
 node_modules/
 coverage/
+__pycache__/
+*.py[cod]

@@ -1,123 +1,82 @@
 <?php
+require_once 'global.php';
+start_app_session();
 
-include 'global.php';
-
-// Initialize the session
-session_start();
- 
-// Check if the user is logged in, if not then redirect him to login page
-if(!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true){
-    header("location: login.php");
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+    header('Location: login.php');
     exit;
 }
-$peopleid = $_SESSION['personid'];
-$parent = $_SESSION['parent'];
-if($parent == "N"){
-    header("location: index.php");
-    exit;
+if (($_SESSION['parent'] ?? 'N') !== 'Y') {
+    http_response_code(403);
+    exit('You are not authorized to record payouts.');
 }
 
-include 'header.php';
-$peoplepayid = $_GET["peopleid"];
-//echo "Payouts ($peoplepayid)";
+$peoplepayid = filter_input(INPUT_POST, 'peopleid', FILTER_VALIDATE_INT);
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $peoplepayid = filter_input(INPUT_GET, 'peopleid', FILTER_VALIDATE_INT);
+}
+if (!$peoplepayid || $peoplepayid < 1) {
+    http_response_code(400);
+    exit('Invalid account.');
+}
 
-
-//select * from chores_history where peopleid = 1
+require_database_config();
 $mysqli = new mysqli($dbhostname, $dbusername, $dbpassword, $dbdatabase);
-
-
-
-// Check for connection errors
-
 if ($mysqli->connect_error) {
+    error_log('Chores database connection failed: ' . $mysqli->connect_error);
+    http_response_code(500);
+    exit('The request could not be completed. Please try again later.');
+}
+$mysqli->set_charset('utf8mb4');
 
-    die("Connection failed: " . $mysqli->connect_error);
+$stmt = $mysqli->prepare('SELECT peoplename, total FROM people_money WHERE peopleid = ?');
+$stmt->bind_param('i', $peoplepayid);
+$stmt->execute();
+$stmt->bind_result($peoplename, $paymenttotal);
+$accountExists = $stmt->fetch();
+$stmt->close();
 
+if (!$accountExists) {
+    $mysqli->close();
+    http_response_code(404);
+    exit('Account not found.');
 }
 
-else{
-    $stmt = $mysqli->prepare("SELECT peoplename, total FROM people_money WHERE peopleid = ?"); 
-    $stmt->bind_param("i", $peoplepayid); 
-    $stmt->execute(); 
-    $stmt->store_result(); 
-    if ($stmt->num_rows > 0) {                     
-        $stmt->bind_result($peoplename, $paymenttotal);                         
-        $stmt->fetch(); 
-        $stmt->close();      
-        $paymenttotal = $paymenttotal * -1;
-        echo "Payouts ($peoplepayid) - $paymenttotal";       
-        $query = "INSERT INTO chores_done (peopleid, choreid, approved, val) VALUES (?, 0, \"Y\", ?);";
-        $stmt = $mysqli->prepare($query);
-        $stmt->bind_param("id", $peoplepayid, $paymenttotal);             
-        $stmt->execute(); 
-        echo "Paid $peoplename $paymenttotal";
+$message = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrf_valid()) {
+        $mysqli->close();
+        http_response_code(403);
+        exit('Invalid request token. Reload and try again.');
     }
-    $stmt->close(); 
+
+    // Keep the existing ledger convention: a payout is recorded as the negative balance.
+    $payoutValue = (float)$paymenttotal * -1;
+    $stmt = $mysqli->prepare("INSERT INTO chores_done (peopleid, choreid, approved, val) VALUES (?, 0, 'Y', ?)");
+    $stmt->bind_param('id', $peoplepayid, $payoutValue);
+    if ($stmt->execute()) {
+        unset($_SESSION['csrf_token']);
+        $stmt->close();
+        $mysqli->close();
+        header('Location: history.php');
+        exit;
+    }
+    error_log('Chores payout insert failed: ' . $stmt->error);
+    $message = 'The payout could not be recorded. Please try again.';
+    $stmt->close();
 }
-/*
-    $peopleid = $_SESSION['personid'];
-    $query = "select * from chores_history where approved = 'N' order by cid";
-
-
-
-    $result = $mysqli->query($query);
-    
-    
-    
-    if ($result->num_rows > 0) {
-    
-        //echo "<h2>Chores List:</h2>";
-    
-        //echo "<ul>";
-    
-        echo '<div class="todo-list"><form action="submitapproval.php" method="post">';
-    
-        while ($row = $result->fetch_assoc()) {
-    
-            $choredoneid = $row['cid'];
-    
-            $name = $row['chorename'];
-            $doneby = $row['peoplename'];
-            $whendone = $row['whendone'];
-            $whendonestring = date_format(date_create($whendone), "d/m/Y");
-            $val = $row['val'];
-            //$val2 = money_format("%.2n", $number);
-            $fmt = new NumberFormatter( 'en_US', NumberFormatter::CURRENCY );
-            $val2 =  $fmt->formatCurrency($val, "NZD");
-            $val2 = str_replace("NZ", "", $val2);
-    
-            //echo "<li>$name $$val";
-    
-            echo '<label class="todo">';
-        echo "<input name=\"$choredoneid\" class=\"todo__state\" type=\"checkbox\" />";
-        
-        echo '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 200 25" class="todo__icon">';
-        echo  '<use xlink:href="#todo__line" class="todo__line"></use>';
-        echo  '<use xlink:href="#todo__box" class="todo__box"></use>';
-        echo  '<use xlink:href="#todo__check" class="todo__check"></use>';
-        echo  '<use xlink:href="#todo__circle" class="todo__circle"></use>';
-        echo  '</svg>';
-        echo "<div class=\"todo__text\">$whendonestring || $name ($doneby)</div></label>";
-    
-    
-        }
-    
-    
-        echo '<label class="todo">';
-        echo "<input class=\"but\" type=\"submit\" value=\"Approve selected chores\">";   
-        echo "</input></label>";
-    
-        //echo "</ul>";
-        echo "</form></div>";
-    
-    } else {
-    
-        echo "No chores found.";
-    
-    }
 $mysqli->close();
 
-}
-*/
-include 'footer.php';
+include 'header.php';
 ?>
+<section class="chores">
+    <h2>Record payout</h2>
+    <p><?php echo h($message); ?></p>
+    <p>Record a payout of <?php echo h(number_format((float)$paymenttotal * -1, 2)); ?> for <?php echo h($peoplename); ?>?</p>
+    <form method="post" action="payout.php">
+        <?php echo csrf_field(); ?>
+        <input type="hidden" name="peopleid" value="<?php echo (int)$peoplepayid; ?>">
+        <button type="submit">Record payout</button>
+    </form>
+</section>
+<?php include 'footer.php'; ?>

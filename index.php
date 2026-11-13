@@ -2,15 +2,14 @@
 
 
 
-// Initialize the session
-session_start();
+require_once 'global.php';
+start_app_session();
  
 // Check if the user is logged in, if not then redirect him to login page
 if(!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true){
     header("location: login.php");
     exit;
 }
-include 'global.php';
 include 'header.php';
 
 // Create a MySQLi connection
@@ -23,7 +22,7 @@ $mysqli = new mysqli($dbhostname, $dbusername, $dbpassword, $dbdatabase);
 
 if ($mysqli->connect_error) {
 
-    die("Connection failed: " . $mysqli->connect_error);
+    error_log('Chores database connection failed: ' . $mysqli->connect_error); http_response_code(500); exit('The request could not be completed. Please try again later.');
 
 }
 
@@ -43,7 +42,7 @@ if ($result->num_rows > 0) {
 
     //echo "<ul>";
 
-    echo '<div class="todo-list"><form action="submitchores.php" method="post">';
+    echo '<div class="todo-list"><form action="submitchores.php" method="post">' . csrf_field();
 
     while ($row = $result->fetch_assoc()) {
 
@@ -60,7 +59,7 @@ if ($result->num_rows > 0) {
         //echo "<li>$name $$val";
 
         echo '<label class="todo">';
-    echo "<input name=\"$choreid\" class=\"todo__state\" type=\"checkbox\" />";
+    echo '<input name="' . (int)$choreid . '" value="1" class="todo__state" type="checkbox" />';
     
     echo '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 200 25" class="todo__icon">';
     echo  '<use xlink:href="#todo__line" class="todo__line"></use>';
@@ -68,7 +67,7 @@ if ($result->num_rows > 0) {
     echo  '<use xlink:href="#todo__check" class="todo__check"></use>';
     echo  '<use xlink:href="#todo__circle" class="todo__circle"></use>';
     echo  '</svg>';
-    echo "<div class=\"todo__text\">$name ($val2)</div></label>";
+    echo '<div class="todo__text">' . h($name) . ' (' . h($val2) . ')</div></label>';
 
 
     }

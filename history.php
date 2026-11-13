@@ -3,7 +3,7 @@
 include 'global.php';
 
 // Initialize the session
-session_start();
+start_app_session();
  
 // Check if the user is logged in, if not then redirect him to login page
 if(!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true){
@@ -24,7 +24,7 @@ $mysqli = new mysqli($dbhostname, $dbusername, $dbpassword, $dbdatabase);
 
 if ($mysqli->connect_error) {
 
-    die("Connection failed: " . $mysqli->connect_error);
+    error_log('Chores database connection failed: ' . $mysqli->connect_error); http_response_code(500); exit('The request could not be completed. Please try again later.');
 
 }
 
@@ -42,9 +42,9 @@ else{
         $total2 =  $fmt->formatCurrency($total, "NZD");
         $total2 = str_replace("NZ", "", $total2);
         echo "<tr>";        
-        echo "<td>$peoplename</td>";
-        echo "<td>$total2</td>";
-        if(isset($parent)){ if($parent == "Y"){ echo "<td><a href=\"payout.php?peopleid=$peoplepayid\">Payout</a></li>"; }} 
+        echo '<td>' . h($peoplename) . '</td>';
+        echo '<td>' . h($total2) . '</td>';
+        if(isset($parent)){ if($parent == "Y"){ echo '<td><a href="payout.php?peopleid=' . (int)$peoplepayid . '">Payout</a></td>'; }}
         echo "</tr>";
     }
     echo "</table>";
@@ -67,10 +67,10 @@ else{
         $whendone = $row["whendone"];
         $approved = $row["approved"];
         echo "<tr>";        
-        echo "<td>$doneby</td>";
-        echo "<td>$chorename</td>";
-        echo "<td>$whendone</td>";        
-        echo "<td>$val2</td>";
+        echo '<td>' . h($doneby) . '</td>';
+        echo '<td>' . h($chorename) . '</td>';
+        echo '<td>' . h($whendone) . '</td>';
+        echo '<td>' . h($val2) . '</td>';
         echo "</tr>";
     }
     echo "</table>";
@@ -94,10 +94,10 @@ else{
         $whendone = $row["whendone"];
         $approved = $row["approved"];
         echo "<tr>";
-        echo "<td>$doneby</td>";
-        echo "<td>$chorename</td>";
-        echo "<td>$whendone</td>";        
-        echo "<td>$val2</td>";
+        echo '<td>' . h($doneby) . '</td>';
+        echo '<td>' . h($chorename) . '</td>';
+        echo '<td>' . h($whendone) . '</td>';
+        echo '<td>' . h($val2) . '</td>';
         echo "</tr>";
     }
     echo "</table>";

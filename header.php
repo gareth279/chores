@@ -2,7 +2,19 @@
 <html>
 <head>
     <title>Family Chores Application</title>
-    <!-- Add your CSS links and other head content here -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0FC0F5">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <link rel="icon" href="/favicon.ico">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/service-worker.js');
+        });
+      }
+    </script>
     <link rel="stylesheet" href="chores.css">
 </head>
 <body>
@@ -23,7 +35,7 @@
                 <?php if(isset($parent)){ if($parent == "Y"){ echo "<li><a href=\"approvals.php\">Approvals</a></li>"; }} ?>
                 <li><a href="history.php">History</a></li>                
                 <li><a href="changepassword.php">Change Password</a></li>   
-                <li><a href="logout.php">Logout (<?php echo $personname ?>)</a></li>
+                <li><form action="logout.php" method="post"><?php echo csrf_field(); ?><button type="submit">Logout (<?php echo h($personname); ?>)</button></form></li>
                 <!-- Add other navigation links as needed -->
             </ul>
         </nav>
