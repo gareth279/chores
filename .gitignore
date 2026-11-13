@@ -1,0 +1,21 @@
+# Secrets and host-specific configuration
+/config.php
+/.env
+/.env.*
+!/config.example.php
+/php.ini
+/.ftpquota
+
+# Runtime and editor artifacts
+*.log
+*.tmp
+*.bak
+*.old
+*~
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+vendor/
+node_modules/
+coverage/
