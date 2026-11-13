@@ -4,6 +4,10 @@ declare(strict_types=1);
 // Hosting can point CHORES_CONFIG_FILE at a PHP file outside the public web root.
 // Environment variables are supported for development and managed hosting.
 $configFile = getenv('CHORES_CONFIG_FILE');
+if ($configFile === false || $configFile === '' || !is_file($configFile)) {
+    // Production-only fallback; protect this file from direct HTTP access in .htaccess.
+    $configFile = __DIR__ . '/config.production.php';
+}
 $config = [];
 if ($configFile !== false && $configFile !== '' && is_file($configFile)) {
     $loadedConfig = require $configFile;
