@@ -85,16 +85,30 @@ $mysqli = new mysqli($dbhostname, $dbusername, $dbpassword, $dbdatabase);
 //////////////////////////
 
 include 'header.php';
-echo htmlspecialchars($loginerrormessage, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 ?>
-<div class="chores">
-<form action="login.php" method="post">
-  <label for="username">Username:</label>
-  <input id="username" name="username" required="" type="text" />
-  <label for="password">Password:</label> <input id="password" name="password" required="" type="password" />
-  <input name="login" type="submit" value="Login" />
-</form>
+<section class="page page--narrow">
+    <div class="page-heading">
+        <p class="eyebrow">Family chores</p>
+        <h1>Welcome back</h1>
+        <p>Sign in to see the chores for your family.</p>
     </div>
+    <div class="surface-card form-card">
+        <form action="/login.php" method="post">
+            <div class="validation-message form-message" role="status" aria-live="polite"><?php echo h($loginerrormessage); ?></div>
+            <div class="form-field">
+                <label for="username">Email address</label>
+                <input id="username" name="username" required type="text" autocomplete="username">
+            </div>
+            <div class="form-field">
+                <label for="password">Password</label>
+                <input id="password" name="password" required type="password" autocomplete="current-password">
+            </div>
+            <div class="form-actions">
+                <input name="login" class="button button--primary" type="submit" value="Login">
+            </div>
+        </form>
+    </div>
+</section>
 <?php
 
 include 'footer.php';

@@ -19,6 +19,9 @@ if($parent == "N"){
 
 include 'header.php';
 
+echo '<section class="page page--approvals">';
+echo '<div class="page-heading"><p class="eyebrow">Parent area</p><h1>Approvals</h1><p>Review completed chores and choose whether to approve or reject them.</p></div>';
+
 
 
 //select * from chores_history where peopleid = 1
@@ -51,7 +54,8 @@ else{
     
         //echo "<ul>";
     
-        echo '<div class="todo-list"><form action="submitapproval.php" method="post">' . csrf_field();
+        echo '<div class="todo-list"><form class="todo-form" action="submitapproval.php" method="post">' . csrf_field();
+        echo '<div class="approval-list">';
     
         while ($row = $result->fetch_assoc()) {
     
@@ -69,37 +73,35 @@ else{
     
             //echo "<li>$name $$val";
     
-            echo '<label class="todo">';
-        echo '<input name="' . (int)$choredoneid . '" value="1" class="todo__state" type="checkbox" />';
-        
-        echo '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 200 25" class="todo__icon">';
-        echo  '<use xlink:href="#todo__line" class="todo__line"></use>';
-        echo  '<use xlink:href="#todo__box" class="todo__box"></use>';
-        echo  '<use xlink:href="#todo__check" class="todo__check"></use>';
-        echo  '<use xlink:href="#todo__circle" class="todo__circle"></use>';
-        echo  '</svg>';
-        echo '<div class="todo__text">' . h($whendonestring) . ' || ' . h($name) . ' (' . h($doneby) . ')</div></label>';
+            echo '<label class="approval-card">';
+            echo '<input name="' . (int)$choredoneid . '" value="1" class="todo__state approval-card__check" type="checkbox" />';
+            echo '<span class="approval-card__body">';
+            echo '<strong class="approval-card__chore">' . h($name) . '</strong>';
+            echo '<span class="approval-card__person">Completed by ' . h($doneby) . '</span>';
+            echo '<time class="approval-card__date" datetime="' . h($whendone) . '">Completed ' . h($whendonestring) . '</time>';
+            echo '</span>';
+            echo '</label>';
     
     
         }
     
     
-        echo '<label class="todo">';
-        echo "<input name=\"approve\" class=\"but\" type=\"submit\" value=\"Approve selected chores\">";   
-        echo "</input></label>";
-        echo '<label class="todo">';
-        echo "<input name=\"reject\" class=\"but\" type=\"submit\" value=\"Reject selected chores\">";   
-        echo "</input></label>";
+        echo '</div>';
+        echo '<div class="approval-actions">';
+        echo '<input name="approve" class="button button--primary" type="submit" value="Approve selected chores">';
+        echo '<input name="reject" class="button button--danger" type="submit" value="Reject selected chores">';
+        echo '</div>';
     
         //echo "</ul>";
         echo "</form></div>";
     
     } else {
     
-        echo "No chores found.";
+        echo '<div class="empty-state"><div><span class="empty-state__icon" aria-hidden="true">✓</span><strong>You are all caught up</strong><p>There are no chores waiting for approval.</p></div></div>';
     
     }
 $mysqli->close();
 }
+echo '</section>';
 include 'footer.php';
 ?>

@@ -69,14 +69,23 @@ $mysqli->close();
 
 include 'header.php';
 ?>
-<section class="chores">
-    <h2>Record payout</h2>
-    <p><?php echo h($message); ?></p>
-    <p>Record a payout of <?php echo h(number_format((float)$paymenttotal * -1, 2)); ?> for <?php echo h($peoplename); ?>?</p>
-    <form method="post" action="payout.php">
-        <?php echo csrf_field(); ?>
-        <input type="hidden" name="peopleid" value="<?php echo (int)$peoplepayid; ?>">
-        <button type="submit">Record payout</button>
-    </form>
+<section class="page page--narrow page--payout">
+    <div class="page-heading">
+        <p class="eyebrow">Parent area</p>
+        <h1>Record payout</h1>
+        <p>Review the amount before recording it.</p>
+    </div>
+    <div class="surface-card payout-summary">
+        <p class="form-message" role="status" aria-live="polite"><?php echo h($message); ?></p>
+        <p class="payout-summary__label">Payout amount</p>
+        <p class="payout-summary__amount">$<?php echo h(number_format((float)$paymenttotal, 2)); ?></p>
+        <p class="payout-summary__person">For <?php echo h($peoplename); ?></p>
+        <form class="payout-summary__actions" method="post" action="payout.php">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="peopleid" value="<?php echo (int)$peoplepayid; ?>">
+            <button type="submit">Record payout</button>
+            <a class="button button--secondary" href="/history.php">Cancel</a>
+        </form>
+    </div>
 </section>
 <?php include 'footer.php'; ?>
