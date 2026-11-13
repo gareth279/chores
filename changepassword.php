@@ -3,15 +3,14 @@
 
 
 
-// Initialize the session
-session_start();
+require_once 'global.php';
+start_app_session();
  
 // Check if the user is already logged in, if yes then redirect him to welcome page
 if(!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true){
     header("location: login.php");
     exit;
 }
-include 'global.php';
 $loginerrormessage = "";
 // Include config file
 //require_once "config.php";
@@ -24,6 +23,8 @@ $peopleid = $_SESSION['personid'];
 $emailfromfrom = $_SESSION['username'];
 
  if (isset($_POST['submit'])) { 
+
+if (!csrf_valid()) { http_response_code(403); exit('Invalid request token. Reload and try again.'); }
 
 $userpassword = $_POST['currentPassword']; 
 $newpassword = $_POST['newPassword']; 
@@ -40,7 +41,7 @@ $mysqli = new mysqli($dbhostname, $dbusername, $dbpassword, $dbdatabase);
 //    $mysqli = new mysqli("localhost", "username", "password", "login_system"); 
     
     // Check for errors 
-    if ($mysqli->connect_error) { die("Connection failed: " . $mysqli->connect_error); }     
+    if ($mysqli->connect_error) { error_log('Chores database connection failed: ' . $mysqli->connect_error); http_response_code(500); exit('The request could not be completed. Please try again later.'); }
     // Prepare and bind the SQL statement 
     $stmt = $mysqli->prepare("SELECT peopleid, name, password, parent FROM people WHERE email = ?"); 
     
@@ -98,52 +99,34 @@ $mysqli = new mysqli($dbhostname, $dbusername, $dbpassword, $dbdatabase);
 include 'header.php';
 //echo $loginerrormessage
 ?>
-<div class="chores">
-<!--form action="login.php" method="post">
-  <label for="username">Username:</label>
-  <input id="username" name="username" required="" type="text" />
-  <label for="password">Password:</label> <input id="password" name="password" required="" type="password" />
-  <input name="login" type="submit" value="Login" />
-</form-->
-
-
-<form name="changepassword.php" method="post">
-
-            <div class="validation-message text-center"><?php if(isset($loginerrormessage)) { echo $loginerrormessage; } ?></div>
-            <h2 class="text-center">Change Password</h2>
-            <div>
-                <div class="row">
-                    <label class="inline-block">Current Password</label>
-                    <span id="currentPassword"
-                        class="validation-message"></span> <input
-                        type="password" name="currentPassword"
-                        class="full-width">
-
-                </div>
-                <div class="row">
-                    <label class="inline-block">New Password</label> <span
-                        id="newPassword" class="validation-message"></span><input
-                        type="password" name="newPassword"
-                        class="full-width">
-
-                </div>
-                <div class="row">
-                    <label class="inline-block">Confirm Password</label>
-                    <span id="confirmPassword"
-                        class="validation-message"></span><input
-                        type="password" name="confirmPassword"
-                        class="full-width">
-
-                </div>
-                <div class="row">
-                    <input type="submit" name="submit" value="Submit"
-                        class="full-width">
-                </div>
-            </div>
-
-        </form>
-
+<section class="page page--narrow">
+    <div class="page-heading">
+        <p class="eyebrow">Account settings</p>
+        <h1>Change password</h1>
+        <p>Enter your current password, then choose a new one.</p>
     </div>
+    <div class="surface-card form-card">
+        <form name="changepassword.php" method="post">
+            <?php echo csrf_field(); ?>
+            <div class="validation-message form-message" role="status" aria-live="polite"><?php if(isset($loginerrormessage)) { echo h($loginerrormessage); } ?></div>
+            <div class="form-field">
+                <label for="currentPassword">Current password</label>
+                <input id="currentPassword" type="password" name="currentPassword" autocomplete="current-password" class="full-width">
+            </div>
+            <div class="form-field">
+                <label for="newPassword">New password</label>
+                <input id="newPassword" type="password" name="newPassword" autocomplete="new-password" class="full-width">
+            </div>
+            <div class="form-field">
+                <label for="confirmPassword">Confirm new password</label>
+                <input id="confirmPassword" type="password" name="confirmPassword" autocomplete="new-password" class="full-width">
+            </div>
+            <div class="form-actions">
+                <input type="submit" name="submit" value="Submit" class="button button--primary">
+            </div>
+        </form>
+    </div>
+</section>
 <?php
 
 include 'footer.php';

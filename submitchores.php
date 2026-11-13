@@ -3,7 +3,7 @@
 include 'global.php';
 
 // Initialize the session
-session_start();
+start_app_session();
  
 // Check if the user is logged in, if not then redirect him to login page
 if(!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true){
@@ -15,6 +15,7 @@ if(!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true){
 //include 'header.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
+    if (!csrf_valid()) { http_response_code(403); exit('Invalid request token. Reload and try again.'); }
    // echo "Post data";
    // foreach ($_POST as $key => $value) {        
    //     $choreid = intval($key);
@@ -33,15 +34,16 @@ $mysqli = new mysqli($dbhostname, $dbusername, $dbpassword, $dbdatabase);
 
 if ($mysqli->connect_error) {
 
-    die("Connection failed: " . $mysqli->connect_error);
+    error_log('Chores database connection failed: ' . $mysqli->connect_error); http_response_code(500); exit('The request could not be completed. Please try again later.');
 
 }
 
 else{
 
     //$query = "insert into chores_done values (?, ?, ?, ?, ?)";
-    foreach ($_POST as $key => $value) {        
-        $choreid = intval($key);
+    foreach ($_POST as $key => $value) {
+        if ($key === 'csrf_token' || !ctype_digit((string)$key) || $value !== '1') { continue; }
+        $choreid = (int)$key;
         $choreval = 0;
         $stmt = $mysqli->prepare("SELECT val FROM chores WHERE choreid = ?"); 
         $stmt->bind_param("i", $choreid); 

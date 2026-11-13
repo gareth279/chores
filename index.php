@@ -2,16 +2,18 @@
 
 
 
-// Initialize the session
-session_start();
+require_once 'global.php';
+start_app_session();
  
 // Check if the user is logged in, if not then redirect him to login page
 if(!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true){
     header("location: login.php");
     exit;
 }
-include 'global.php';
 include 'header.php';
+
+echo '<section class="page page--chores">';
+echo '<div class="page-heading"><p class="eyebrow">Ready when you are</p><h1>Choose a chore</h1><p>Select the chores you have completed.</p></div>';
 
 // Create a MySQLi connection
 
@@ -23,7 +25,7 @@ $mysqli = new mysqli($dbhostname, $dbusername, $dbpassword, $dbdatabase);
 
 if ($mysqli->connect_error) {
 
-    die("Connection failed: " . $mysqli->connect_error);
+    error_log('Chores database connection failed: ' . $mysqli->connect_error); http_response_code(500); exit('The request could not be completed. Please try again later.');
 
 }
 
@@ -43,7 +45,8 @@ if ($result->num_rows > 0) {
 
     //echo "<ul>";
 
-    echo '<div class="todo-list"><form action="submitchores.php" method="post">';
+    echo '<div class="todo-list"><form class="todo-form" action="submitchores.php" method="post">' . csrf_field();
+    echo '<div class="todo-list__items">';
 
     while ($row = $result->fetch_assoc()) {
 
@@ -60,34 +63,29 @@ if ($result->num_rows > 0) {
         //echo "<li>$name $$val";
 
         echo '<label class="todo">';
-    echo "<input name=\"$choreid\" class=\"todo__state\" type=\"checkbox\" />";
-    
-    echo '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 200 25" class="todo__icon">';
-    echo  '<use xlink:href="#todo__line" class="todo__line"></use>';
-    echo  '<use xlink:href="#todo__box" class="todo__box"></use>';
-    echo  '<use xlink:href="#todo__check" class="todo__check"></use>';
-    echo  '<use xlink:href="#todo__circle" class="todo__circle"></use>';
-    echo  '</svg>';
-    echo "<div class=\"todo__text\">$name ($val2)</div></label>";
+        echo '<input name="' . (int)$choreid . '" value="1" class="todo__state" type="checkbox" />';
+        echo '<span class="todo__content"><span class="todo__text">' . h($name) . '</span><span class="todo__value">' . h($val2) . '</span></span>';
+        echo '</label>';
 
 
     }
 
 
-    echo '<label class="todo">';
-    echo "<input class=\"but\" type=\"submit\" value=\"Tick off chores\">";   
-    echo "</input></label>";
+    echo '</div>';
+    echo '<div class="todo__actions"><input class="button button--primary" type="submit" value="Tick off chores"></div>';
 
     //echo "</ul>";
     echo "</form></div>";
 
 } else {
 
-    echo "No chores found.";
+    echo '<div class="empty-state"><div><span class="empty-state__icon" aria-hidden="true">✓</span><strong>No chores available right now</strong><p>Check back later for the next chore.</p></div></div>';
 
 }
 
 }
+
+echo '</section>';
 
 include 'footer.php';
 ?>

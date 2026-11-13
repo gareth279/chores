@@ -4,6 +4,10 @@ declare(strict_types=1);
 // Hosting can point CHORES_CONFIG_FILE at a PHP file outside the public web root.
 // Environment variables are supported for development and managed hosting.
 $configFile = getenv('CHORES_CONFIG_FILE');
+if ($configFile === false || $configFile === '' || !is_file($configFile)) {
+    // Production-only fallback; protect this file from direct HTTP access in .htaccess.
+    $configFile = __DIR__ . '/config.production.php';
+}
 $config = [];
 if ($configFile !== false && $configFile !== '' && is_file($configFile)) {
     $loadedConfig = require $configFile;
@@ -49,4 +53,20 @@ function require_database_config(): void
         http_response_code(500);
         exit('Application configuration is incomplete.');
     }
+}
+
+function start_app_session(): void
+{
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        return;
+    }
+    ini_set('session.use_strict_mode', '1');
+    session_set_cookie_params([
+        'lifetime' => 2592000,
+        'path' => '/',
+        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    session_start();
 }
