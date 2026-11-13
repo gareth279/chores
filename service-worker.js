@@ -25,7 +25,9 @@ self.addEventListener('activate', function (event) {
     caches.keys()
       .then(function (names) {
         return Promise.all(names
-          .filter(function (name) { return name.indexOf('chores-static-') === 0 && name !== CACHE_NAME; })
+          .filter(function (name) {
+            return name === 'chores-cache-v1' || (name.indexOf('chores-static-') === 0 && name !== CACHE_NAME);
+          })
           .map(function (name) { return caches.delete(name); }));
       })
       .then(function () { return self.clients.claim(); })
