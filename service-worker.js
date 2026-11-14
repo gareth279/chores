@@ -1,21 +1,33 @@
-const CACHE_NAME = 'chores-static-v2';
+const CACHE_NAME = 'chores-static-v3';
+const ASSET_VERSION = '20261114-1';
 const STATIC_ASSETS = [
-  '/chores.css',
-  '/chores.js',
-  '/manifest.json',
-  '/favicon.svg',
-  '/favicon.ico',
-  '/assets/icons/chores-icon.svg',
-  '/assets/icons/icon-192.png',
-  '/assets/icons/icon-512.png',
-  '/assets/icons/apple-touch-icon.png'
+  '/chores.css?v=' + ASSET_VERSION,
+  '/chores.js?v=' + ASSET_VERSION,
+  '/manifest.json?v=' + ASSET_VERSION,
+  '/favicon.svg?v=' + ASSET_VERSION,
+  '/favicon.ico?v=' + ASSET_VERSION,
+  '/assets/icons/chores-icon.svg?v=' + ASSET_VERSION,
+  '/assets/icons/icon-192.png?v=' + ASSET_VERSION,
+  '/assets/icons/icon-512.png?v=' + ASSET_VERSION,
+  '/assets/icons/apple-touch-icon.png?v=' + ASSET_VERSION
 ];
-const STATIC_PATHS = new Set(STATIC_ASSETS);
+const STATIC_PATHS = new Set(STATIC_ASSETS.map(function (asset) {
+  return new URL(asset, self.location.origin).pathname;
+}));
 
 self.addEventListener('install', function (event) {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(function (cache) { return cache.addAll(STATIC_ASSETS); })
+      .then(function (cache) {
+        // Optional icons or a transient network error must not block activation.
+        return Promise.allSettled(STATIC_ASSETS.map(function (asset) {
+          return fetch(asset, { cache: 'reload' }).then(function (response) {
+            if (response.ok && response.type === 'basic') {
+              return cache.put(asset, response);
+            }
+          });
+        }));
+      })
       .then(function () { return self.skipWaiting(); })
   );
 });
@@ -45,14 +57,14 @@ self.addEventListener('fetch', function (event) {
 
   event.respondWith(
     caches.open(CACHE_NAME).then(function (cache) {
-      return cache.match(url.pathname).then(function (cached) {
-        if (cached) return cached;
-        return fetch(request).then(function (response) {
-          if (response.ok && response.type === 'basic') {
-            cache.put(url.pathname, response.clone());
-          }
+      return fetch(request, { cache: 'no-cache' }).then(function (response) {
+        if (response.ok && response.type === 'basic') {
+          cache.put(request, response.clone());
           return response;
-        });
+        }
+        return cache.match(request).then(function (cached) { return cached || response; });
+      }).catch(function () {
+        return cache.match(request).then(function (cached) { return cached || Response.error(); });
       });
     })
   );

@@ -6,6 +6,7 @@ $activeRoute = basename((string)($_SERVER['SCRIPT_NAME'] ?? 'index.php'));
 $isChoresPage = $activeRoute === 'index.php';
 $isApprovalsPage = $activeRoute === 'approvals.php';
 $isHistoryPage = in_array($activeRoute, ['history.php', 'payout.php'], true);
+$assetVersion = '20261114-1';
 ?>
 <!DOCTYPE html>
 <html lang="en-NZ">
@@ -17,15 +18,17 @@ $isHistoryPage = in_array($activeRoute, ['history.php', 'payout.php'], true);
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Chores">
-    <link rel="manifest" href="/manifest.json">
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
-    <link rel="stylesheet" href="/chores.css">
+    <link rel="manifest" href="/manifest.json?v=<?php echo rawurlencode($assetVersion); ?>">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=<?php echo rawurlencode($assetVersion); ?>">
+    <link rel="icon" href="/favicon.ico?v=<?php echo rawurlencode($assetVersion); ?>" sizes="any">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png?v=<?php echo rawurlencode($assetVersion); ?>">
+    <link rel="stylesheet" href="/chores.css?v=<?php echo rawurlencode($assetVersion); ?>">
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('/service-worker.js');
+          navigator.serviceWorker.register('/service-worker.js?v=<?php echo rawurlencode($assetVersion); ?>', { updateViaCache: 'none' })
+            .then(function (registration) { return registration.update(); })
+            .catch(function () {});
         });
       }
     </script>
